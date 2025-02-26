@@ -4,8 +4,12 @@ from fastapi_cache import FastAPICache
 from fastapi_cache.backends.redis import RedisBackend
 from fastapi_cache.decorator import cache
 import redis.asyncio as redis
+from .database import Base
+from .database import engine
 
 app = FastAPI()
+
+Base.metadata.create_all(bind=engine)
 
 @app.on_event("startup")
 async def startup():

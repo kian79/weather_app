@@ -13,9 +13,13 @@ API_URL = "http://api.openweathermap.org/data/2.5/weather?q={}&APPID={}&units=me
 
 router = APIRouter()
 
+def is_weather_id_alert(weather_id:int) -> bool:
+    if weather_id > 232 or weather_id < 200:
+        return True
+    return False
 
 @router.get("/weather/{location}", response_model=WeatherResponse)
-@cache()
+@cache(expire=60)
 async def get_weather(location: str):
     
     response = requests.get(API_URL.format(location, API_KEY))
@@ -23,10 +27,15 @@ async def get_weather(location: str):
     main_data = data["main"]
     wind_data = data["wind"]
     timestamp = data["dt"]
+    weather_id = data["weather"][0]["id"]
+    weather_alerts = []
+    
+
     
     # location_obj = Location(location=location)
     weather_data = WeatherData(
         location=location,
+        weather_id = weather_id,
         temperature=main_data["temp"],
         temperature_feels_like=main_data["feels_like"],
         temperature_min=main_data["temp_min"],
@@ -34,25 +43,9 @@ async def get_weather(location: str):
         humidity=main_data["humidity"],
         wind=wind_data["speed"],
         pressure=main_data["pressure"],
-        timestamp=timestamp
+        timestamp=timestamp,
+
     )
     return weather_data
 
 
-@router.get("/weather_test/{location}")
-def get_weather(location: str):
-    response = requests.get(API_URL.format(location, API_KEY))
-    data = response.json()
-    # weather_data = {
-    #     "weather_id": data["weather"][0]["id"],
-    #     "temperature": data["main"]["temp"],
-    #     "temperature_feels_like": data["main"]["feels_like"],
-    #     "temperature_min": data["main"]["temp_min"],
-    #     "temperature_max": data["main"]["temp_max"],
-    #     "humidity": data["main"]["humidity"],
-    #     "wind": data["wind"]["speed"],
-    #     "pressure": data["main"]["pressure"],
-    #     "timestamp": data["dt"],
-    #     # "weather_alerts": data["weather"][0]["description"]
-    # }
-    return {"data": data["main"]}
